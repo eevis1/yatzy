@@ -5,16 +5,16 @@ Sovellus on noppapeli Yatzy, jota voi pelata yhdestä neljään henkilöä. Kun 
 
 Sovelluksen ominaisuuksia ovat:
 
-     - Käyttäjä voi kirjautua sisään ja ulos sekä luoda uuden tunnuksen.
+- Käyttäjä voi kirjautua sisään ja ulos sekä luoda uuden tunnuksen.
      
-     - Käyttäjä näkee aiemmat huippupisteet taulukossa.
+- Käyttäjä näkee aiemmat huippupisteet taulukossa.
      
-     - Pelissä voi valita pelaajien määrän.
+- Pelissä voi valita pelaajien määrän.
      
-     - Moninpelin yhteydessä pelaajat luovat nimimerkin, jonka perusteella tulokset tallennetaan.
+- Moninpelin yhteydessä pelaajat luovat nimimerkin, jonka perusteella tulokset tallennetaan.
      
-     - Nopanheiton jälkeen pelaaja voi valita, mitkä silmäluvut jätetään pöydälle.
+- Nopanheiton jälkeen pelaaja voi valita, mitkä silmäluvut jätetään pöydälle.
      
-     - Pelaaja valitsee, minkä yhdistelmän alle heittojen lopputulos merkitään.
+- Pelaaja valitsee, minkä yhdistelmän alle heittojen lopputulos merkitään.
      
-     - Säännöt ovat luettavissa pelissä.
+- Säännöt ovat luettavissa pelissä.
