@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Yatzy</title>
+</head>
+<body>
+    <h1>Yatzy</h1>
+    <p>Current Player: {{ current_player['name'] }}</p>
+    <form action="{{ url_for('roll') }}" method="post">
+        {% for i in range(5) %}
+            <input type="checkbox" name="held_dice" value="{{ i }}" {% if held_dice[i] %}checked{% endif %}>
+            {{ dice[i] }}
+        {% endfor %}
+        <button type="submit">Roll</button>
+    </form>
+    <p>Rolls: {{ rolls }}/3</p>
+
+    <form action="{{ url_for('choose_category') }}" method="post">
+        <label for="category">Choose a category:</label>
+        <select name="category">
+            {% for category in categories %}
+                <option value="{{ category }}" {% if category in current_player['used_categories'] %}disabled{% endif %}>
+                    {{ category }}
+                </option>
+            {% endfor %}
+        </select>
+        <button type="submit">Submit</button>
+    </form>
+    <h2>Players</h2>
+    <ul>
+        {% for player in players %}
+            <li>{{ player['name'] }}: {{ player['score'] }}</li>
+        {% endfor %}
+    </ul>
+    <form action="{{ url_for('end_game') }}" method="post">
+        <button type="submit">End Game</button>
+    </form>
+</body>
+</html>

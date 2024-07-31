@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Continue Yatzy Game</title>
+</head>
+<body>
+    <h1>Continue Yatzy Game</h1>
+    <form method="POST" action="{{ url_for('continue_game') }}">
+        <label for="game_id">Enter Game ID:</label>
+        <input type="text" id="game_id" name="game_id" required>
+        <button type="submit">Continue</button>
+    </form>
+</body>
+</html>
