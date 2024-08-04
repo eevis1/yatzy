@@ -32,7 +32,7 @@ Kloonaa tämä repositorio omalle koneellesi ja siirry sen juurikansioon. Luo ka
 DATABASE_URL=<tietokannan-paikallinen-osoite>
 SECRET_KEY=<salainen-avain>
 ```
-Navigoi kansioon peli
+Navigoi pelin kansioon
 
 Sovellus käynnistyy komennolla python sovellus.py
 
