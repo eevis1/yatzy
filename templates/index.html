@@ -9,7 +9,7 @@
     <form action="{{ url_for('roll') }}" method="post">
         {% for i in range(5) %}
             <input type="checkbox" name="held_dice" value="{{ i }}" {% if held_dice[i] %}checked{% endif %}>
-            {{ dice[i] }}
+            <img src="{{ url_for('static', filename='dice' ~ dice[i] ~ '.png') }}" alt="Dice {{ dice[i] }}">
         {% endfor %}
         <button type="submit">Roll</button>
     </form>
@@ -32,8 +32,12 @@
             <li>{{ player['name'] }}: {{ player['score'] }}</li>
         {% endfor %}
     </ul>
-    <form action="{{ url_for('end_game') }}" method="post">
+    <form action="{{ url_for('continue_later') }}" method="post">
+        <button type="submit">Continue later</button>
+    </form>
+    <form action="/end_game" method="post">
         <button type="submit">End Game</button>
     </form>
+
 </body>
 </html>

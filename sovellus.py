@@ -1,52 +1,21 @@
 from flask import Flask, render_template, request, redirect, url_for, session
-from flask_sqlalchemy import SQLAlchemy
+import psycopg2
 import random
-import os
+from os import getenv
 
 app = Flask(__name__)
-app.secret_key = 'supersecretkey'
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'postgresql://postgres:PythonOnKaarme.24@localhost/yatzy_db')
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db = SQLAlchemy(app)
+app.secret_key = getenv('SECRET_KEY')
+
+DATABASE_URL = getenv('DATABASE_URL')
+
+# Luodaan yhteys tietokantaan
+def get_db_connection():
+    conn = psycopg2.connect(DATABASE_URL)
+    return conn
 
 CATEGORIES = ['ykkoset', 'kakkoset', 'kolmoset', 'neloset', 'vitoset', 'kutonen',
               'pari', 'kaksi_paria', 'kolme_samaa', 'nelja_samaa', 'pieni_suora',
               'iso_suora', 'tayskasi', 'yatzy', 'sattuma']
-
-class Player(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(50), nullable=False)
-    score = db.Column(db.Integer, default=0)
-    game_id = db.Column(db.Integer, db.ForeignKey('game.id'), nullable=False)
-    completed_game_id = db.Column(db.Integer, db.ForeignKey('completed_game.id'), nullable=True)
-    used_categories = db.relationship('Category', backref='player', lazy=True)
-
-class Game(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    status = db.Column(db.String(20), nullable=False, default='ongoing')
-    current_player_index = db.Column(db.Integer, default=0)
-    players = db.relationship('Player', backref='game', lazy=True)
-    dice = db.Column(db.ARRAY(db.Integer), default=lambda: [random.randint(1, 6) for _ in range(5)])
-    rolls = db.Column(db.Integer, default=0)
-    held_dice = db.Column(db.ARRAY(db.Boolean), default=lambda: [False] * 5)
-    categories = db.relationship('Category', backref='game', lazy=True)
-
-class Category(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(50), nullable=False)
-    score = db.Column(db.Integer, nullable=False)
-    player_id = db.Column(db.Integer, db.ForeignKey('player.id'), nullable=False)
-    game_id = db.Column(db.Integer, db.ForeignKey('game.id'), nullable=False)
-
-class CompletedGame(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    players = db.relationship('Player', backref='completed_game', lazy=True)
-    final_scores = db.Column(db.JSON, nullable=False)
-
-class PlayerCategory(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    player_id = db.Column(db.Integer, db.ForeignKey('player.id'), nullable=False)
-    category_id = db.Column(db.Integer, db.ForeignKey('category.id'), nullable=False)
 
 def roll_dice(held_dice=None):
     if held_dice is None:
@@ -68,17 +37,32 @@ def setup():
         session.clear()  # Nollaa session
 
         if 'continue' in request.form:
-            game_id = request.form['game_id']
-            game = Game.query.get(game_id)
+            game_id_str = request.form['game_id']
+            game_id = int(game_id_str) 
+            conn = get_db_connection()
+            cur = conn.cursor()
+            cur.execute('SELECT * FROM game WHERE id = %s AND status = %s', (game_id, 'ongoing'))
+            game = cur.fetchone()
             if game:
-                session['current_game_id'] = game.id
-                session['current_player_index'] = game.current_player_index
-                session['dice'] = game.dice
-                session['rolls'] = game.rolls
-                session['held_dice'] = game.held_dice
-                session['players'] = [{'name': player.name, 'score': player.score, 'used_categories': {}} for player in game.players]
+                session['current_game_id'] = game[0]
+                session['current_player_index'] = game[2]
+                session['dice'] = game[3]
+                session['rolls'] = game[4]
+                session['held_dice'] = game[5]
+
+                cur.execute('SELECT name, score FROM player WHERE game_id = %s', (game_id,))
+                players = cur.fetchall()
+                session['players'] = [{'name': player[0], 'score': player[1], 'used_categories': {}} for player in players]
+                
+                cur.close()
+                conn.close()
                 return redirect(url_for('index'))
             else:
+                print(type(game_id))  # pitäisi olla <class 'int'>
+                print(game)
+                print(game_id)
+                cur.close()
+                conn.close()
                 return "Game not found", 404
 
         num_players = int(request.form['num_players'])
@@ -88,45 +72,79 @@ def setup():
         session['rolls'] = 0
         session['held_dice'] = [False] * 5
         
-        game = Game(status='ongoing', current_player_index=0, dice=session['dice'], rolls=session['rolls'], held_dice=session['held_dice'])
-        db.session.add(game)
-        db.session.commit()
-        session['current_game_id'] = game.id
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute('INSERT INTO game (status, current_player_index, dice, rolls, held_dice) VALUES (%s, %s, %s, %s, %s) RETURNING id',
+                    ('ongoing', 0, session['dice'], session['rolls'], session['held_dice']))
+        game_id = cur.fetchone()[0]
+        conn.commit()
+        session['current_game_id'] = game_id
         
         for player in session['players']:
-            player_obj = Player(name=player['name'], game_id=game.id)
-            db.session.add(player_obj)
-        db.session.commit()
+            cur.execute('INSERT INTO player (name, score, game_id) VALUES (%s, %s, %s)', (player['name'], player['score'], game_id))
+        conn.commit()
         
+        cur.close()
+        conn.close()
         return redirect(url_for('index'))
     return render_template('setup.html')
 
-@app.route('/end_game', methods=['POST'])
-def end_game():
+@app.route('/continue_later', methods=['POST'])
+def continue_later():
     game_id = session.get('current_game_id')
     if game_id:
-        game = Game.query.get(game_id)
-        if game:
-            game.status = 'completed'
-            db.session.commit()
-            session.clear()
-            return f"Game ended. Your game ID is {game_id}. Save this ID to continue later."
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute('UPDATE game SET status = %s WHERE id = %s', ('ongoing', game_id))
+        conn.commit()
+        cur.close()
+        conn.close()
+        session.clear()
+        return f"Game paused. Your game ID is {game_id}. Save this ID to continue later."
     return "No game in progress", 400
+
+@app.route('/end_game', methods=['POST'])
+def end_game():
+    game_id = session.get('game_id')
+    
+    if game_id:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Poista peli tietokannasta
+        cursor.execute("DELETE FROM game WHERE id = %s", (game_id,))
+        conn.commit()
+        conn.close()
+    
+    session.pop('game_id', None)  # Tyhjennä sessio
+    
+    return redirect('/')
 
 @app.route('/continue', methods=['GET', 'POST'])
 def continue_game():
     if request.method == 'POST':
         game_id = request.form['game_id']
-        game = Game.query.get(game_id)
-        if game and game.status == 'ongoing':
-            session['current_game_id'] = game.id
-            session['current_player_index'] = game.current_player_index
-            session['dice'] = game.dice
-            session['rolls'] = game.rolls
-            session['held_dice'] = game.held_dice
-            session['players'] = [{'name': player.name, 'score': player.score, 'used_categories': {}} for player in game.players]
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute('SELECT * FROM game WHERE id = %s AND status = %s', (game_id, 'ongoing'))
+        game = cur.fetchone()
+        if game:
+            session['current_game_id'] = game[0]
+            session['current_player_index'] = game[2]
+            session['dice'] = game[3]
+            session['rolls'] = game[4]
+            session['held_dice'] = game[5]
+
+            cur.execute('SELECT name, score FROM player WHERE game_id = %s', (game_id,))
+            players = cur.fetchall()
+            session['players'] = [{'name': player[0], 'score': player[1], 'used_categories': {}} for player in players]
+            
+            cur.close()
+            conn.close()
             return redirect(url_for('index'))
         else:
+            cur.close()
+            conn.close()
             return "Game not found or already completed", 404
     return render_template('continue.html')
 
@@ -148,24 +166,24 @@ def choose_category():
         current_player['score'] += score
         current_player['used_categories'][category] = score
 
-        session['rolls'] = 0
+        session['rolls'] = 1
         session['held_dice'] = [False] * 5
         session['dice'] = roll_dice()
 
         session['current_player_index'] = (session['current_player_index'] + 1) % len(session['players'])
         
-        game_id = session.get('current_game_id')
-        if game_id:
-            game = Game.query.get(game_id)
-            if game:
-                game.current_player_index = session['current_player_index']
-                game.dice = session['dice']
-                game.rolls = session['rolls']
-                game.held_dice = session['held_dice']
-                db.session.commit()
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute('UPDATE game SET current_player_index = %s, dice = %s, rolls = %s, held_dice = %s WHERE id = %s',
+                    (session['current_player_index'], session['dice'], session['rolls'], session['held_dice'], session['current_game_id']))
+        cur.execute('UPDATE player SET score = %s WHERE name = %s AND game_id = %s',
+                    (current_player['score'], current_player['name'], session['current_game_id']))
+        conn.commit()
+        
+        cur.close()
+        conn.close()
     return redirect(url_for('index'))
 
-# Pisteytysfunktiot
 def calculate_score(dice, category):
     if category == 'ykkoset':
         return dice.count(1) * 1
@@ -181,7 +199,10 @@ def calculate_score(dice, category):
         return dice.count(6) * 6
     elif category == 'pari':
         pairs = [d for d in set(dice) if dice.count(d) >= 2]
-        return max(pairs) * 2 if pairs else 0
+        if pairs:
+            return max(pairs) * 2
+        else:
+            return 0
     elif category == 'kaksi_paria':
         pairs = [d for d in set(dice) if dice.count(d) >= 2]
         if len(pairs) >= 2:
@@ -219,6 +240,4 @@ def calculate_score(dice, category):
         return 0
 
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
     app.run(debug=True)
