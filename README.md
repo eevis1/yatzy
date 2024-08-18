@@ -40,6 +40,8 @@ Sovellus käynnistyy komennolla python sovellus.py
 
 Peli löytyy osoitteesta http://127.0.0.1:5000/setup
 
+Jos pelaaja painaa Continue later -nappia, peliä pääsee jatkamaan uudestaan yllä mainitussa osoitteessa syöttämällä saadun koodin.
+
 
 
 
