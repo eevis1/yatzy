@@ -7,6 +7,11 @@ CREATE TABLE game (
     held_dice BOOLEAN[] DEFAULT ARRAY[FALSE, FALSE, FALSE, FALSE, FALSE]
 );
 
+CREATE TABLE completed_game (
+    id SERIAL PRIMARY KEY,
+    final_scores JSON NOT NULL
+);
+
 CREATE TABLE player (
     id SERIAL PRIMARY KEY,
     name VARCHAR(50) NOT NULL,
@@ -21,11 +26,6 @@ CREATE TABLE category (
     score INTEGER NOT NULL,
     player_id INTEGER REFERENCES player(id) ON DELETE CASCADE,
     game_id INTEGER REFERENCES game(id) ON DELETE CASCADE
-);
-
-CREATE TABLE completed_game (
-    id SERIAL PRIMARY KEY,
-    final_scores JSON NOT NULL
 );
 
 CREATE TABLE player_category (
