@@ -78,7 +78,7 @@ def setup():
                 conn.close()
                 return redirect(url_for('index'))
             else:
-                print(type(game_id))  # pitäisi olla <class 'int'>
+                print(type(game_id))
                 print(game)
                 print(game_id)
                 cur.close()
@@ -202,7 +202,7 @@ def choose_category():
             return redirect(url_for('end_game_results'))
 
         # Siirry seuraavaan pelaajaan
-        session['rolls'] = 0
+        session['rolls'] = 1
         session['held_dice'] = [False] * 5
         session['dice'] = roll_dice()
         session['current_player_index'] = (session['current_player_index'] + 1) % len(session['players'])
