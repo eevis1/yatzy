@@ -17,6 +17,7 @@
     <h1>Yatzy</h1>
     <p>Current Player: {{ current_player['name'] }}</p>
     <form action="{{ url_for('roll') }}" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         {% for i in range(5) %}
             <input type="checkbox" name="held_dice" value="{{ i }}" {% if held_dice[i] %}checked{% endif %}>
             <img src="{{ url_for('static', filename='dice' ~ dice[i] ~ '.png') }}" alt="Dice {{ dice[i] }}">
@@ -26,6 +27,7 @@
     <p>Rolls: {{ rolls }}/3</p>
 
     <form action="{{ url_for('choose_category') }}" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <label for="category">Choose a category:</label>
         <select name="category">
             {% for category in categories %}
@@ -43,9 +45,11 @@
         {% endfor %}
     </ul>
     <form action="{{ url_for('continue_later') }}" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button type="submit">Continue later</button>
     </form>
     <form action="/end_game" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button type="submit">End Game</button>
     </form>
 
