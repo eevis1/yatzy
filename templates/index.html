@@ -2,8 +2,18 @@
 <html>
 <head>
     <title>Yatzy</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
+    <!-- Navigointipalkki -->
+    <nav>
+        <ul>
+            <li><a href="{{ url_for('index') }}">Etusivu</a></li>
+            <li><a href="{{ url_for('setup') }}">Uusi peli</a></li>
+            <li><a href="{{ url_for('continue_game') }}">Jatka peliä</a></li>
+            <li><a href="{{ url_for('end_game') }}">Lopeta peli</a></li>
+        </ul>
+    </nav>
     <h1>Yatzy</h1>
     <p>Current Player: {{ current_player['name'] }}</p>
     <form action="{{ url_for('roll') }}" method="post">

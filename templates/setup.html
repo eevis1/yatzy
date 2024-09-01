@@ -3,8 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <title>Yatzy Setup</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
+    <div class="alert">
+    <!-- Näytetään mahdollinen flash-viesti -->
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <ul>
+          {% for message in messages %}
+            <li>{{ message }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+    </div>
+
     <h1>Yatzy Setup</h1>
     <form method="POST" action="{{ url_for('setup') }}">
         <label for="num_players">Number of Players:</label>
