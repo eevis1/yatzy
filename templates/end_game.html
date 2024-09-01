@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pelin tulokset</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <!-- Navigointipalkki -->
+    <nav>
+        <ul>
+            <li><a href="{{ url_for('index') }}">Etusivu</a></li>
+            <li><a href="{{ url_for('setup') }}">Uusi peli</a></li>
+            <li><a href="{{ url_for('continue_game') }}">Jatka peliä</a></li>
+            <li><a href="{{ url_for('end_game') }}">Lopeta peli</a></li>
+        </ul>
+    </nav>
+    <h1>Pelin tulokset</h1>
+    <ul>
+        {% for player in players %}
+            <li>{{ player['name'] }}: {{ player['score'] }} pistettä</li>
+        {% endfor %}
+    </ul>
+    <a href="{{ url_for('setup') }}">Aloita uusi peli</a>
+</body>
+</html>
