@@ -3,8 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <title>Continue Yatzy Game</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
+    <!-- Navigointipalkki -->
+    <nav>
+        <ul>
+            <li><a href="{{ url_for('setup') }}">Uusi peli</a></li>
+            <li><a href="{{ url_for('continue_game') }}">Jatka toista peliä</a></li>
+        </ul>
+    </nav>
     <h1>Continue Yatzy Game</h1>
     <form method="POST" action="{{ url_for('continue_game') }}">
         <label for="game_id">Enter Game ID:</label>
