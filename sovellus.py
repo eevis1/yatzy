@@ -3,6 +3,7 @@ import psycopg2
 import random
 from scoring import calculate_score
 from os import getenv
+import uuid  # Lisätty uuid kirjaston importtaus
 
 app = Flask(__name__)
 app.secret_key = getenv('SECRET_KEY')
@@ -13,6 +14,24 @@ DATABASE_URL = getenv('DATABASE_URL')
 def get_db_connection():
     conn = psycopg2.connect(DATABASE_URL)
     return conn
+
+# CSRF-tokenin generointi
+def generate_csrf_token():
+    if 'csrf_token' not in session:
+        session['csrf_token'] = str(uuid.uuid4())
+    return session['csrf_token']
+
+# Lisää CSRF-token Jinja-templaatteihin
+app.jinja_env.globals['csrf_token'] = generate_csrf_token
+
+@app.before_request
+def protect_from_csrf():
+    if request.method == "POST":
+        token = session.pop('csrf_token', None)
+        form_token = request.form.get('csrf_token')
+        if not token or token != form_token:
+            flash("Invalid CSRF token")
+            return redirect(url_for('index'))
 
 CATEGORIES = ['ykkoset', 'kakkoset', 'kolmoset', 'neloset', 'vitoset', 'kutonen',
               'pari', 'kaksi_paria', 'kolme_samaa', 'nelja_samaa', 'pieni_suora',
