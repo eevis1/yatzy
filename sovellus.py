@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 import psycopg2
 import random
+from scoring import calculate_score
 from os import getenv
 
 app = Flask(__name__)
@@ -118,7 +119,7 @@ def end_game():
     
     session.pop('game_id', None)  # Tyhjennä sessio
     
-    return redirect('/')
+    return redirect('/setup')
 
 @app.route('/continue', methods=['GET', 'POST'])
 def continue_game():
@@ -184,7 +185,7 @@ def choose_category():
         conn.close()
     return redirect(url_for('index'))
 
-def calculate_score(dice, category):
+"""def calculate_score(dice, category):
     if category == 'ykkoset':
         return dice.count(1) * 1
     elif category == 'kakkoset':
@@ -237,7 +238,7 @@ def calculate_score(dice, category):
     elif category == 'sattuma':
         return sum(dice)
     else:
-        return 0
+        return 0"""
 
 if __name__ == '__main__':
     app.run(debug=True)
